@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.example.PlayerEnterZoneCallback;
+
 @Mixin(ServerPlayerEntity.class)
 public class PlayerMoveMixin {
 
@@ -38,30 +40,27 @@ public class PlayerMoveMixin {
 
         // Проверяем, находится ли игрок в зоне
         boolean isInZone = restrictedZone.contains(playerPos.getX(), playerPos.getY(), playerPos.getZ());
+        boolean allowed = PlayerEnterZoneCallback.EVENT.invoker().allowEnter(player, restrictedZone);
         double teleportX = random.nextInt(x1 - 1, x1);
         double teleportZ = random.nextInt(z1 - 1, z1);
+        String allowedMessage = allowed ? "Вход разрешен" : "Вход запрещен";
         // Если игрок заходит в зону
         if (isInZone && !wasInZone) {
             massage = "Вход в запрещенную зону";
             player.sendMessage(Text.of(massage), false);
+            player.sendMessage(Text.of((allowedMessage)), false);
         }
 
         // Если игрок в зоне, блокируем его движение
-        if (isInZone) {
-            if (lastValidPos != null) {
-                // Возвращаем игрока на последнюю допустимую позицию
-                player.teleport(teleportX, lastValidPos.getY(), teleportZ);
-            }
-        } else {
-            // Если игрок не в зоне, обновляем последнюю допустимую позицию
-            lastValidPos = playerPos;
-            for (int x = x1 + 1; x < x2; x++) {
-                for (int z = z1 + 1; z < z2; z++) {
-                    world.spawnParticles(ParticleTypes.CRIMSON_SPORE, (double) x, 64, (double) z, 1, 0, 0, 0, 0);
-                }
+        if (isInZone && !allowed) {
+            // Возвращаем игрока на последнюю допустимую позицию
+            player.teleport(teleportX, (y1+y2)/2, teleportZ);
+        }
+        for (int x = x1 + 1; x < x2; x++) {
+            for (int z = z1 + 1; z < z2; z++) {
+                world.spawnParticles(ParticleTypes.CRIMSON_SPORE, (double) x, 64, (double) z, 1, 0, 0, 0, 0);
             }
         }
-
         // Обновляем флаг
         wasInZone = isInZone;
     }

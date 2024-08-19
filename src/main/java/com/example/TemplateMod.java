@@ -13,9 +13,9 @@ public class TemplateMod implements ModInitializer {
     private boolean onPlayerEnterZone(ServerPlayerEntity player, Box zone) {
         // Ваши условия для разрешения/запрещения входа в зону
         // Например, запретить вход игрокам с именем "Notch"
-        if (player.getName().getString().equals("Notch")) {
-            return false;
+        if (player.getName().getString().equals("KISEL03ru")) {
+            return true;
         }
-        return true;
+        return false;
     }
 }
